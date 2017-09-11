@@ -15,6 +15,7 @@ use Automattic\WooCommerce\HttpClient\OAuth;
 use Automattic\WooCommerce\HttpClient\Options;
 use Automattic\WooCommerce\HttpClient\Request;
 use Automattic\WooCommerce\HttpClient\Response;
+use Illuminate\Support\Facades\Log;
 
 /**
  * REST API HTTP Client class.
@@ -325,6 +326,20 @@ class HttpClient
                 $errorCode    = $errors['code'];
             }
 
+            // Test if return a valid JSON.
+            $jsonErrorMessage = null;
+            if (JSON_ERROR_NONE !== json_last_error()) {
+                $jsonErrorMessage = function_exists('json_last_error_msg') ? json_last_error_msg() : 'Invalid JSON returned';
+            }
+
+            Log::error('Failed to connect to WooCommerce.', [
+                'jsonErrorMessage' => $jsonErrorMessage,
+                'message' => $errorMessage,
+                'code' => $errorCode,
+                'request' => $this->request,
+                'response' => $this->response,
+            ]);
+
             throw new HttpClientException(\sprintf('Error: %s [%s]', $errorMessage, $errorCode), $this->response->getCode(), $this->request, $this->response);
         }
     }
@@ -343,12 +358,6 @@ class HttpClient
         }
 
         $parsedResponse = \json_decode($body, true);
-
-        // Test if return a valid JSON.
-        if (JSON_ERROR_NONE !== json_last_error()) {
-            $message = function_exists('json_last_error_msg') ? json_last_error_msg() : 'Invalid JSON returned';
-            throw new HttpClientException($message, $this->response->getCode(), $this->request, $this->response);
-        }
 
         $this->lookForErrors($parsedResponse);
 

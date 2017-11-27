@@ -314,7 +314,7 @@ class HttpClient
     protected function lookForErrors($parsedResponse)
     {
         // Any non-200/201/202 response code indicates an error.
-        if (!\in_array($this->response->getCode(), ['200', '201', '202'])) {
+        if (!\in_array($this->response->getCode(), ['200', '201', '202', '302'])) {
             $errors = !empty($parsedResponse['errors']) ? $parsedResponse['errors'] : $parsedResponse;
 
             if (!empty($errors[0])) {
